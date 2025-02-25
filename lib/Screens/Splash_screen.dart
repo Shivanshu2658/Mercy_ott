@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:mercy_tv_app/Screens/home_page.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -36,18 +37,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateToHome() {
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 800),
-        pageBuilder: (_, __, ___) => const HomePage(),
-        transitionsBuilder: (_, animation, __, child) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-      ),
-    );
+    Get.off(() => HomePage(), transition: Transition.fadeIn, duration: const Duration(milliseconds: 800));
   }
 
   @override

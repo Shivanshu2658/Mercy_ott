@@ -1,81 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:better_player_plus/better_player_plus.dart';
 
-class LiveButtonWidget extends StatefulWidget {
-  final bool isLiveStream;
-  final VoidCallback onLiveButtonPressed;
+class CustomBetterPlayerControls extends StatelessWidget {
+  final BetterPlayerController controller;
 
-  const LiveButtonWidget({
-    Key? key,
-    required this.isLiveStream,
-    required this.onLiveButtonPressed,
-  }) : super(key: key);
-
-  @override
-  State<LiveButtonWidget> createState() => _LiveButtonWidgetState();
-}
-
-class _LiveButtonWidgetState extends State<LiveButtonWidget> {
-  bool _showButton = true;
-  late final _hideButtonTimer;
-
-  @override
-  void initState() {
-    super.initState();
-    _startHideButtonTimer();
-  }
-
-  void _startHideButtonTimer() {
-    _hideButtonTimer?.cancel();
-    _hideButtonTimer = Future.delayed(const Duration(seconds: 5), () {
-      if (mounted) {
-        setState(() {
-          _showButton = false;
-        });
-      }
-    });
-  }
-
-  void _onTap() {
-    setState(() {
-      _showButton = true;
-    });
-    _startHideButtonTimer();
-  }
+  const CustomBetterPlayerControls({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: _onTap,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: _showButton ? 1 : 0,
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: Container(
-            margin: const EdgeInsets.only(left: 16, top: 16),
-            height: 24,
-            width: 60,
-            decoration: BoxDecoration(
-              color: widget.isLiveStream ? Colors.red : const Color(0xFF8DBDCC),
-              borderRadius: BorderRadius.circular(20),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.black54,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: Icon(
+              controller.isPlaying() == true ? Icons.pause : Icons.play_arrow,
+              color: Colors.white,
             ),
-            child: TextButton(
-              onPressed: widget.onLiveButtonPressed,
-              style: TextButton.styleFrom(padding: EdgeInsets.zero),
-              child: Text(
-                widget.isLiveStream ? 'Live' : 'Go Live',
-                style: const TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
+            onPressed: () {
+              if (controller.isPlaying() == true) {
+                controller.pause();
+              } else {
+                controller.play();
+              }
+            },
           ),
-        ),
+          IconButton(
+            icon: const Icon(Icons.fullscreen, color: Colors.white),
+            onPressed: () => controller.enterFullScreen(),
+          ),
+        ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _hideButtonTimer?.cancel();
-    super.dispose();
   }
 }
