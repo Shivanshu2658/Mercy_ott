@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _fadeController.forward();
 
-    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         _navigateToHome();
       }
@@ -37,7 +37,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   void _navigateToHome() {
-    Get.off(() => HomePage(), transition: Transition.fadeIn, duration: const Duration(milliseconds: 800));
+    Get.off(
+      () => const HomePage(),
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 800),
+    );
   }
 
   @override

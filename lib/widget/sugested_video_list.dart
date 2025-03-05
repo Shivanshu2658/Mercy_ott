@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:mercy_tv_app/Colors/custom_color.dart';
 import 'package:mercy_tv_app/API/dataModel.dart';
@@ -10,9 +11,15 @@ class SuggestedVideoCard extends StatelessWidget {
 
   final SuggestedVideoController controller = Get.find<SuggestedVideoController>();
 
+  static const int cardsPerScreen = 3;
+  static const double cardWidth = 180 + 16;
+
   @override
   Widget build(BuildContext context) {
     return Obx(() {
+      final currentIndex = controller.currentlyPlayingIndex.value;
+      debugPrint('SuggestedVideoCard rebuilding for index: $currentIndex');
+      
       if (controller.isLoading.value) {
         return const Center(child: CircularProgressIndicator());
       } else if (controller.errorMessage.isNotEmpty) {
@@ -22,33 +29,32 @@ class SuggestedVideoCard extends StatelessWidget {
       } else {
         return SizedBox(
           height: 180,
-          child: ListView.builder(
+          child: SingleChildScrollView(
+            controller: controller.scrollController,
             scrollDirection: Axis.horizontal,
-            itemCount: controller.videoData.length,
-            itemBuilder: (context, index) {
-              var video = controller.videoData[index];
-              var program = video['program'] ?? {};
+            physics: const NeverScrollableScrollPhysics(),
+            child: Row(
+              children: List.generate(controller.videoData.length, (index) {
+                var video = controller.videoData[index];
+                var program = video['program'] ?? {};
 
-              ProgramDetails programDetails = ProgramDetails(
-                imageUrl: program['image'],
-                date: program['date'],
-                time: program['time'],
-                title: program['program'] ?? 'Unknown Program',
-                videoUrl: video['url'] ?? '',
-              );
+                ProgramDetails programDetails = ProgramDetails(
+                  imageUrl: program['image'],
+                  date: program['date'],
+                  time: program['time'],
+                  title: program['program'] ?? 'Unknown Program',
+                  videoUrl: video['url'] ?? '',
+                );
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: VideoThumbnailCard(
+                return VideoThumbnailCard(
                   programDetails: programDetails,
-                  isPlaying: controller.currentlyPlayingIndex.value == index,
-                  onTap: (details) {
-                    controller.playVideo(details.videoUrl, index);
-                    onVideoTap(details);
-                  },
-                ),
-              );
-            },
+                  isFocused: controller.currentlyPlayingIndex.value == index,
+                  onTap: onVideoTap,
+                  onRightPressed: () {},
+                  onLeftPressed: () {},
+                );
+              }),
+            ),
           ),
         );
       }
@@ -58,14 +64,18 @@ class SuggestedVideoCard extends StatelessWidget {
 
 class VideoThumbnailCard extends StatelessWidget {
   final ProgramDetails programDetails;
-  final bool isPlaying;
+  final bool isFocused;
   final void Function(ProgramDetails) onTap;
+  final VoidCallback onRightPressed;
+  final VoidCallback onLeftPressed;
 
   const VideoThumbnailCard({
     super.key,
     required this.programDetails,
-    required this.isPlaying,
+    required this.isFocused,
     required this.onTap,
+    required this.onRightPressed,
+    required this.onLeftPressed,
   });
 
   String formatDateTime(String? date, String? time) {
@@ -98,87 +108,96 @@ class VideoThumbnailCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () => onTap(programDetails),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: isPlaying ? Border.all(color: CustomColors.buttonColor, width: 3) : null,
-            boxShadow: isPlaying
-                ? [
-                    BoxShadow(
-                      color: Colors.redAccent.withOpacity(0.6),
-                      blurRadius: 10,
-                      spreadRadius: 2,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter) {
+              onTap(programDetails);
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: GestureDetector(
+          onTap: () => onTap(programDetails),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              border: isFocused ? Border.all(color: Colors.yellow, width: 3) : null,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isFocused
+                  ? [
+                      BoxShadow(
+                        color: Colors.redAccent.withOpacity(0.6),
+                        blurRadius: 10,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : [],
+            ),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: SizedBox(
+                    width: 180,
+                    height: 180,
+                    child: Image.network(
+                      'https://mercyott.com/${programDetails.imageUrl ?? ''}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Image.asset(
+                        'assets/images/video_thumb_1.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ]
-                : [],
-          ),
-          child: Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 180,
-                  height: 180,
-                  child: Image.network(
-                    'https://mercyott.com/${programDetails.imageUrl ?? ''}',
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Image.asset(
-                      'assets/images/video_thumb_1.png',
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(10),
+                    image: const DecorationImage(
+                      image: AssetImage('assets/images/transparent.png'),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/transparent.png'),
-                    fit: BoxFit.cover,
+                Positioned(
+                  left: 10,
+                  bottom: 10,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        programDetails.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Mulish-Medium',
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.history, color: CustomColors.buttonColor, size: 18),
+                          const SizedBox(width: 5),
+                          Text(
+                            formatDateTime(programDetails.date, programDetails.time),
+                            style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Mulish-Medium'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Positioned(
-                left: 10,
-                bottom: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      programDetails.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        fontFamily: 'Mulish-Medium',
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.history, color: CustomColors.buttonColor, size: 18),
-                        const SizedBox(width: 5),
-                        Text(
-                          formatDateTime(programDetails.date, programDetails.time),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontFamily: 'Mulish-Medium',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
