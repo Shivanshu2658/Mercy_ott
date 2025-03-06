@@ -10,7 +10,9 @@ void main() {
   Get.put(ScreenPlayerController());   // Then ScreenPlayerController, which depends on SuggestedVideoController
   Get.put(HomeController());           // Finally HomeController
 
-  runApp(const MyApp());
+  runApp(
+     MyApp()
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -19,12 +21,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.black),
-        useMaterial3: true,
-      ),
+  theme: ThemeData(
+    focusColor: Colors.yellow,
+    highlightColor: Colors.yellow,
+  ),
       home: SplashScreen(),
     );
   }

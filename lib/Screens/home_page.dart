@@ -15,6 +15,15 @@ class HomePage extends StatelessWidget {
     final ScreenPlayerController playerController = Get.find<ScreenPlayerController>();
     final FocusNode focusNode = FocusNode()..requestFocus();
 
+    // Define onVideoTap function
+    void onVideoTap(ProgramDetails programDetails) {
+      homeController.playVideo(programDetails);
+      playerController.showControls.value = false;
+    }
+
+    // Pass onVideoTap to ScreenPlayerController
+    playerController.setOnVideoTap(onVideoTap);
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -142,12 +151,7 @@ class HomePage extends StatelessWidget {
                                   Container(
                                     height: 180,
                                     color: Colors.black54,
-                                    child: SuggestedVideoCard(
-                                      onVideoTap: (ProgramDetails programDetails) {
-                                        homeController.playVideo(programDetails);
-                                        playerController.showControls.value = false;
-                                      }, // Removed isTopBarFocused parameter
-                                    ),
+                                    child: SuggestedVideoCard(onVideoTap: onVideoTap),
                                   ),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,

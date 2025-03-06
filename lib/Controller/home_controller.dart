@@ -9,7 +9,6 @@ class HomeController extends GetxController {
 
   late ScreenPlayerController playerController;
   Timer? _timer;
-
   @override
   void onInit() {
     super.onInit();

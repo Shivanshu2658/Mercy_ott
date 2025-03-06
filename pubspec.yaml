@@ -45,7 +45,7 @@ dependencies:
   better_player_plus: ^1.0.8
   flutter_screenutil: ^5.9.3
   get: ^4.7.2
-  
+  device_preview: ^1.2.0
   
 
 dev_dependencies:

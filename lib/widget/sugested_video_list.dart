@@ -11,14 +11,12 @@ class SuggestedVideoCard extends StatelessWidget {
 
   final SuggestedVideoController controller = Get.find<SuggestedVideoController>();
 
-  static const int cardsPerScreen = 3;
   static const double cardWidth = 180 + 16;
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final currentIndex = controller.currentlyPlayingIndex.value;
-      debugPrint('SuggestedVideoCard rebuilding for index: $currentIndex');
+      debugPrint('SuggestedVideoCard rebuilding for index: ${controller.currentlyPlayingIndex.value}');
       
       if (controller.isLoading.value) {
         return const Center(child: CircularProgressIndicator());
@@ -29,32 +27,30 @@ class SuggestedVideoCard extends StatelessWidget {
       } else {
         return SizedBox(
           height: 180,
-          child: SingleChildScrollView(
+          child: ListView.builder(
             controller: controller.scrollController,
             scrollDirection: Axis.horizontal,
             physics: const NeverScrollableScrollPhysics(),
-            child: Row(
-              children: List.generate(controller.videoData.length, (index) {
-                var video = controller.videoData[index];
-                var program = video['program'] ?? {};
+            itemCount: controller.videoData.length,
+            itemBuilder: (context, index) {
+              var video = controller.videoData[index];
+              var program = video['program'] ?? {};
 
-                ProgramDetails programDetails = ProgramDetails(
-                  imageUrl: program['image'],
-                  date: program['date'],
-                  time: program['time'],
-                  title: program['program'] ?? 'Unknown Program',
-                  videoUrl: video['url'] ?? '',
-                );
+              ProgramDetails programDetails = ProgramDetails(
+                imageUrl: program['image'],
+                date: program['date'],
+                time: program['time'],
+                title: program['program'] ?? 'Unknown Program',
+                videoUrl: video['url'] ?? '',
+              );
 
-                return VideoThumbnailCard(
-                  programDetails: programDetails,
-                  isFocused: controller.currentlyPlayingIndex.value == index,
-                  onTap: onVideoTap,
-                  onRightPressed: () {},
-                  onLeftPressed: () {},
-                );
-              }),
-            ),
+              return VideoThumbnailCard(
+                programDetails: programDetails,
+                isFocused: controller.currentlyPlayingIndex.value == index,
+                focusNode: controller.videoFocusNodes[index],
+                onTap: onVideoTap,
+              );
+            },
           ),
         );
       }
@@ -65,17 +61,15 @@ class SuggestedVideoCard extends StatelessWidget {
 class VideoThumbnailCard extends StatelessWidget {
   final ProgramDetails programDetails;
   final bool isFocused;
+  final FocusNode focusNode;
   final void Function(ProgramDetails) onTap;
-  final VoidCallback onRightPressed;
-  final VoidCallback onLeftPressed;
 
   const VideoThumbnailCard({
     super.key,
     required this.programDetails,
     required this.isFocused,
+    required this.focusNode,
     required this.onTap,
-    required this.onRightPressed,
-    required this.onLeftPressed,
   });
 
   String formatDateTime(String? date, String? time) {
@@ -111,14 +105,22 @@ class VideoThumbnailCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Focus(
+        focusNode: focusNode,
+        onFocusChange: (hasFocus) {
+          if (hasFocus) {
+            final controller = Get.find<SuggestedVideoController>();
+            controller.currentlyPlayingIndex.value = controller.videoFocusNodes.indexOf(focusNode);
+            debugPrint('Focus changed to index: ${controller.currentlyPlayingIndex.value}');
+            controller.update();
+            Get.forceAppUpdate();
+          }
+        },
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter) {
+            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
               onTap(programDetails);
               return KeyEventResult.handled;
             }
-            return KeyEventResult.ignored;
           }
           return KeyEventResult.ignored;
         },

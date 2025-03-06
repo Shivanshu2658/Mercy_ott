@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:mercy_tv_app/Controller/screenplayer_controller.dart';
+import 'package:mercy_tv_app/Controller/SuggestedVideoController.dart';
 import 'package:video_player/video_player.dart';
 
 class ScreenPlayer extends StatelessWidget {
   final String videoUrl;
   final ScreenPlayerController controller = Get.find<ScreenPlayerController>();
+  final SuggestedVideoController suggestedController = Get.find<SuggestedVideoController>();
 
   ScreenPlayer({super.key, required this.videoUrl});
 
@@ -22,8 +24,7 @@ class ScreenPlayer extends StatelessWidget {
           children: [
             SizedBox.expand(
               child: Obx(() {
-                if (!controller.isVideoInitialized.value ||
-                    controller.isBuffering.value) {
+                if (!controller.isVideoInitialized.value || controller.isBuffering.value) {
                   return Container(
                     color: Colors.grey[900],
                     child: const Center(
@@ -69,40 +70,29 @@ class ScreenPlayer extends StatelessWidget {
                               children: [
                                 Focus(
                                   focusNode: controller.liveButtonFocus,
-                                  child: Obx(() => AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 200),
-                                        decoration: BoxDecoration(
-                                          border: controller
-                                                  .isLiveButtonFocused.value
-                                              ? Border.all(
-                                                  color: Colors.white, width: 2)
-                                              : null,
-                                        ),
-                                        child: Container(
-                                          height: 20,
-                                          width: 50,
+                                  onFocusChange: (hasFocus) {
+                                    controller.isLiveButtonFocused.value = hasFocus;
+                                    if (hasFocus) controller.update();
+                                  },
+                                  child: Obx(() => GestureDetector(
+                                        onTap: controller.isLive.value ? null : controller.switchToLive,
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: controller.isLive.value
                                                 ? Colors.red
                                                 : const Color(0xFF8DBDCC),
-                                            borderRadius:
-                                                BorderRadius.circular(20),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: controller.liveButtonFocus.hasFocus
+                                                ? Border.all(color: Colors.yellow, width: 2)
+                                                : null,
                                           ),
-                                          child: TextButton(
-                                            onPressed: controller.isLive.value
-                                                ? null
-                                                : () =>
-                                                    controller.switchToLive(),
-                                            style: TextButton.styleFrom(
-                                                padding: EdgeInsets.zero),
-                                            child: Text(
-                                              controller.isLive.value
-                                                  ? 'Live'
-                                                  : 'Go Live',
-                                              style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 11),
+                                          child: Text(
+                                            controller.isLive.value ? 'Live' : 'Go Live',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
                                             ),
                                           ),
                                         ),
@@ -110,55 +100,78 @@ class ScreenPlayer extends StatelessWidget {
                                 ),
                                 Focus(
                                   focusNode: controller.menuButtonFocus,
-                                  child: Obx(() => AnimatedContainer(
-                                        duration:
-                                            const Duration(milliseconds: 200),
-                                        decoration: BoxDecoration(
-                                          border: !controller
-                                                      .isLiveButtonFocused
-                                                      .value &&
-                                                  controller
-                                                      .menuButtonFocus.hasFocus
-                                              ? Border.all(
-                                                  color: Colors.white, width: 2)
-                                              : null,
-                                        ),
-                                        child: PopupMenuButton<String>(
-                                          icon: const Icon(Icons.more_vert,
-                                              color: Colors.white),
-                                          onSelected: (value) {
-                                            if (value == 'Speed') {
-                                              controller.showSpeedMenu(context);
-                                            } else if (value == 'Quality') {
-                                              controller
-                                                  .showQualityMenu(context);
-                                            } else if (value == 'FullScreen') {
-                                              controller.toggleFullScreen();
-                                            }
-                                          },
-                                          itemBuilder: (context) => [
-                                            const PopupMenuItem(
-                                              value: 'Speed',
-                                              child: Text('Speed'),
-                                            ),
-                                            const PopupMenuItem(
-                                              value: 'Quality',
-                                              child: Text('Quality'),
-                                            ),
-                                            PopupMenuItem(
-                                              value: 'FullScreen',
-                                              child: Text(
-                                                  controller.isFullScreen.value
-                                                      ? 'Exit Full Screen'
-                                                      : 'Full Screen'),
-                                            ),
-                                          ],
+                                  onFocusChange: (hasFocus) {
+                                    controller.isTopBarFocused.value = hasFocus;
+                                    if (hasFocus) controller.update();
+                                  },
+                                  child: Obx(() => GestureDetector(
+                                        onTap: () => controller.showPopupMenu(context),
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            border: controller.menuButtonFocus.hasFocus
+                                                ? Border.all(color: Colors.yellow, width: 2)
+                                                : null,
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: const Icon(
+                                            Icons.more_vert,
+                                            color: Colors.white,
+                                          ),
                                         ),
                                       )),
                                 ),
                               ],
                             ),
                           ),
+                          Obx(() => suggestedController.isLoading.value
+                              ? const SizedBox.shrink()
+                              : Container(
+                                  height: 100,
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  child: ListView.builder(
+                                    controller: suggestedController.scrollController,
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: suggestedController.videoData.length,
+                                    itemBuilder: (context, index) {
+                                      final video = suggestedController.videoData[index];
+                                      return Focus(
+                                        focusNode: suggestedController.videoFocusNodes[index],
+                                        onFocusChange: (hasFocus) {
+                                          if (hasFocus) {
+                                            suggestedController.currentlyPlayingIndex.value = index;
+                                            controller.update();
+                                            suggestedController.update();
+                                          }
+                                        },
+                                        child: GestureDetector(
+                                          onTap: () => suggestedController.playVideo(video['video_url']),
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 200),
+                                            width: 180,
+                                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey[800],
+                                              borderRadius: BorderRadius.circular(8),
+                                              border: suggestedController.videoFocusNodes[index].hasFocus
+                                                  ? Border.all(color: Colors.yellow, width: 2)
+                                                  : null,
+                               
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                video['title'] ?? 'Video $index',
+                                                style: const TextStyle(color: Colors.white),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: Column(
@@ -170,14 +183,12 @@ class ScreenPlayer extends StatelessWidget {
                                     IconButton(
                                       icon: const Icon(Icons.replay_10,
                                           color: Colors.white, size: 40),
-                                      onPressed:
-                                          controller.seekBackwardWithFeedback,
+                                      onPressed: controller.seekBackwardWithFeedback,
                                     ),
                                     const SizedBox(width: 20),
                                     IconButton(
                                       icon: Icon(
-                                        controller.videoPlayerController!.value
-                                                .isPlaying
+                                        controller.videoPlayerController!.value.isPlaying
                                             ? Icons.pause
                                             : Icons.play_arrow,
                                         color: Colors.white,
@@ -189,32 +200,26 @@ class ScreenPlayer extends StatelessWidget {
                                     IconButton(
                                       icon: const Icon(Icons.forward_10,
                                           color: Colors.white, size: 40),
-                                      onPressed:
-                                          controller.seekForwardWithFeedback,
+                                      onPressed: controller.seekForwardWithFeedback,
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 8),
                                 if (!controller.isLive.value)
                                   Slider(
-                                    value: controller.videoPlayerController!
-                                        .value.position.inSeconds
-                                        .toDouble(),
+                                    value: controller.videoPlayerController!.value.position.inSeconds.toDouble(),
                                     min: 0.0,
-                                    max: controller.videoPlayerController!.value
-                                        .duration.inSeconds
-                                        .toDouble(),
+                                    max: controller.videoPlayerController!.value.duration.inSeconds.toDouble(),
                                     activeColor: Colors.red,
                                     inactiveColor: Colors.grey,
                                     onChanged: (value) {
-                                      controller.videoPlayerController!.seekTo(
-                                          Duration(seconds: value.toInt()));
+                                      controller.videoPlayerController!
+                                          .seekTo(Duration(seconds: value.toInt()));
                                     },
                                   ),
                                 const SizedBox(height: 8),
                                 Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     controller.isLive.value
                                         ? const Text(
@@ -227,9 +232,7 @@ class ScreenPlayer extends StatelessWidget {
                                           )
                                         : Text(
                                             '${controller.getPosition()} / ${controller.getDuration()}',
-                                            style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16),
+                                            style: const TextStyle(color: Colors.white, fontSize: 16),
                                           ),
                                     IconButton(
                                       icon: const Icon(Icons.fullscreen,
