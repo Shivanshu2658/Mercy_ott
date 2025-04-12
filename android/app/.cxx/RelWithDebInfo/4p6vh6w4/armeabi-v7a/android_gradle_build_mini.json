@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/cotginanalytics/Documents/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/cotginanalytics/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/cotginanalytics/StudioProjects/mercy_ott/android/app/.cxx/RelWithDebInfo/4p6vh6w4/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/cotginanalytics/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/cotginanalytics/StudioProjects/mercy_ott/android/app/.cxx/RelWithDebInfo/4p6vh6w4/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

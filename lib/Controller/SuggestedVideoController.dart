@@ -11,6 +11,10 @@ class SuggestedVideoController extends GetxController {
   late ScrollController scrollController;
   late List<FocusNode> videoFocusNodes;
   bool _dataFetched = false;
+  final RxInt lastFocusedIndex = 0.obs;
+  final RxBool showSuggestedList = true.obs; // or false.obs initially
+
+
 
   @override
   void onInit() {
@@ -19,9 +23,16 @@ class SuggestedVideoController extends GetxController {
     if (!_dataFetched) {
       fetchSortedVideoData();
       _dataFetched = true;
+      showSuggestedList.value = true;
     }
     super.onInit();
   }
+
+  void hideSuggestedVideoList(bool changes) {
+    showSuggestedList.value = changes;
+    print("---===== ${currentlyPlayingIndex.value}");
+  }
+
 
   Future<void> fetchSortedVideoData() async {
     try {
@@ -38,6 +49,8 @@ class SuggestedVideoController extends GetxController {
         debugPrint('Video data fetched: ${videoData.length} items');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (Get.context != null && videoFocusNodes.isNotEmpty) {
+            scrollController.jumpTo(0); // Ensure controller is attached
+
             FocusScope.of(Get.context!).requestFocus(videoFocusNodes[0]);
           }
         });
@@ -54,30 +67,124 @@ class SuggestedVideoController extends GetxController {
     }
   }
 
+  final double cardWidth = 180 + 16; // Card width + margin
+  bool get canMoveLeft => currentlyPlayingIndex.value > 0;
+  bool get canMoveRight => currentlyPlayingIndex.value < videoData.length - 1;
+  final _navigationLock = false.obs;
+
+  // void moveLeft() {
+  //   if (!canMoveLeft || _navigationLock.value) return;
+  //   _navigationLock.value = true;
+  //
+  //   currentlyPlayingIndex.value--;
+  //   _updateFocusAndScroll();
+  //
+  //   Future.delayed(const Duration(milliseconds: 200), () => _navigationLock.value = false);
+  // }
+  //
+  // void moveRight() {
+  //   if (!canMoveRight || _navigationLock.value) return;
+  //   _navigationLock.value = true;
+  //
+  //   currentlyPlayingIndex.value++;
+  //   _updateFocusAndScroll();
+  //
+  //   Future.delayed(const Duration(milliseconds: 200), () => _navigationLock.value = false);
+  // }
+  // Update move methods
   void moveLeft() {
-    if (currentlyPlayingIndex.value > 0) {
-      currentlyPlayingIndex.value--;
-      if (Get.context != null && videoFocusNodes.isNotEmpty) {
-        FocusScope.of(Get.context!).requestFocus(videoFocusNodes[currentlyPlayingIndex.value]);
-        debugPrint('Moved left to index: ${currentlyPlayingIndex.value}');
-        update();
-        Get.forceAppUpdate();
-      }
-    }
+    if (!canMoveLeft || _navigationLock.value) return;
+    _navigationLock.value = true;
+    scrollToIndex(currentlyPlayingIndex.value - 1).then((_) {
+      _navigationLock.value = false;
+    });
   }
 
   void moveRight() {
-    if (currentlyPlayingIndex.value < videoData.length - 1) {
-      currentlyPlayingIndex.value++;
-      if (Get.context != null && videoFocusNodes.isNotEmpty) {
-        FocusScope.of(Get.context!).requestFocus(videoFocusNodes[currentlyPlayingIndex.value]);
-        debugPrint('Moved right to index: ${currentlyPlayingIndex.value}');
-        update();
-        Get.forceAppUpdate();
-      }
+    if (!canMoveRight || _navigationLock.value) return;
+    _navigationLock.value = true;
+    scrollToIndex(currentlyPlayingIndex.value + 1).then((_) {
+      _navigationLock.value = false;
+    });
+  }
+
+  // // Add this method to restore focus
+  void restoreFocus() {
+    if (lastFocusedIndex.value >= 0 &&
+        lastFocusedIndex.value < videoFocusNodes.length) {
+      videoFocusNodes[lastFocusedIndex.value].requestFocus();
+      scrollToIndex(lastFocusedIndex.value);
     }
   }
 
+
+
+  Future<void> scrollToIndex(int index) async {
+
+    if (index < 0 || index >= videoData.length) return;
+    if (!scrollController.hasClients) {
+      debugPrint('ScrollController not attached, cannot scroll');
+      return;
+    }
+    currentlyPlayingIndex.value = index;
+    lastFocusedIndex.value = index;
+
+    final scrollPosition = index * cardWidth -
+        (Get.context!.mediaQuerySize.width / 2) +
+        (cardWidth / 2);
+
+    await scrollController.animateTo(
+      scrollPosition.clamp(0.0, scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutQuad,
+    );
+
+    if (videoFocusNodes.length > index) {
+      videoFocusNodes[index].requestFocus();
+    }
+  }
+
+  // Future<void> scrollToIndex(int index) async {
+  //   if (index < 0 || index >= videoData.length) return;
+  //
+  //   // Update both indices
+  //   currentlyPlayingIndex.value = index;
+  //   lastFocusedIndex.value = index;
+  //
+  //   // Calculate scroll position to center the item
+  //   final scrollPosition = index * cardWidth -
+  //       (Get.context!.mediaQuerySize.width / 2) +
+  //       (cardWidth / 2);
+  //
+  //   // Smooth scroll
+  //   await scrollController.animateTo(
+  //     scrollPosition.clamp(0.0, scrollController.position.maxScrollExtent),
+  //     duration: const Duration(milliseconds: 300),
+  //     curve: Curves.easeOutQuad,
+  //   );
+  //
+  //   // Ensure focus is set after scrolling completes
+  //   if (videoFocusNodes.length > index) {
+  //     videoFocusNodes[index].requestFocus();
+  //   }
+  // }
+
+  @override
+  void onReady() {
+    super.onReady();
+    // Restore focus when controller is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      scrollToIndex(currentlyPlayingIndex.value);
+      // restoreFocus();
+    });
+  }
+
+
+
+
+
+
+  /// shivanshu added this reset focus for resetting.
   void resetFocus() {
     currentlyPlayingIndex.value = 0;
     if (videoFocusNodes.isNotEmpty && Get.context != null) {

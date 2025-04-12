@@ -32,7 +32,8 @@ class ScreenPlayerController extends GetxController {
 
   static const _seekDebounceDuration = Duration(milliseconds: 10);
 
-  final SuggestedVideoController suggestedVideoController = Get.find<SuggestedVideoController>();
+  final SuggestedVideoController suggestedVideoController =
+      Get.find<SuggestedVideoController>();
   late FocusNode liveButtonFocus;
   late FocusNode menuButtonFocus;
 
@@ -68,23 +69,24 @@ class ScreenPlayerController extends GetxController {
       disposePlayer();
 
       debugPrint('🎥 Initializing video: $videoUrl (Live: $live)');
-      _videoPlayerController = VideoPlayerController.networkUrl(Uri.parse(videoUrl))
-        ..initialize().then((_) {
-          currentVideoUrl.value = videoUrl;
-          isLive.value = live;
-          isVideoInitialized.value = true;
-          isBuffering.value = false;
-          _videoPlayerController!.play();
-          debugPrint('✅ Video playback started');
-          update();
-          suggestedVideoController.update();
-          Get.forceAppUpdate();
-          _focusFirstCard();
-        }).catchError((error) {
-          isVideoInitialized.value = false;
-          isBuffering.value = false;
-          debugPrint('❌ Error initializing video: $error');
-        });
+      _videoPlayerController =
+          VideoPlayerController.networkUrl(Uri.parse(videoUrl))
+            ..initialize().then((_) {
+              currentVideoUrl.value = videoUrl;
+              isLive.value = live;
+              isVideoInitialized.value = true;
+              isBuffering.value = false;
+              _videoPlayerController!.play();
+              debugPrint('✅ Video playback started');
+              update();
+              suggestedVideoController.update();
+              Get.forceAppUpdate();
+              _focusFirstCard();
+            }).catchError((error) {
+              isVideoInitialized.value = false;
+              isBuffering.value = false;
+              debugPrint('❌ Error initializing video: $error');
+            });
 
       _videoPlayerController!.addListener(() {
         if (_videoPlayerController!.value.isBuffering != isBuffering.value) {
@@ -139,7 +141,9 @@ class ScreenPlayerController extends GetxController {
   }
 
   void seekForwardWithFeedback() {
-    if (_videoPlayerController != null && !isLive.value && (_seekDebounceTimer == null || !_seekDebounceTimer!.isActive)) {
+    if (_videoPlayerController != null &&
+        !isLive.value &&
+        (_seekDebounceTimer == null || !_seekDebounceTimer!.isActive)) {
       final currentPosition = _videoPlayerController!.value.position;
       final newPosition = currentPosition + const Duration(seconds: 10);
       _videoPlayerController!.seekTo(newPosition).then((_) {
@@ -157,10 +161,14 @@ class ScreenPlayerController extends GetxController {
   }
 
   void seekBackwardWithFeedback() {
-    if (_videoPlayerController != null && !isLive.value && (_seekDebounceTimer == null || !_seekDebounceTimer!.isActive)) {
+    if (_videoPlayerController != null &&
+        !isLive.value &&
+        (_seekDebounceTimer == null || !_seekDebounceTimer!.isActive)) {
       final currentPosition = _videoPlayerController!.value.position;
       final newPosition = currentPosition - const Duration(seconds: 10);
-      _videoPlayerController!.seekTo(newPosition < Duration.zero ? Duration.zero : newPosition).then((_) {
+      _videoPlayerController!
+          .seekTo(newPosition < Duration.zero ? Duration.zero : newPosition)
+          .then((_) {
         showSeekFeedback.value = true;
         seekFeedbackText.value = '-10s';
         showControls.value = true;
@@ -229,11 +237,14 @@ class ScreenPlayerController extends GetxController {
     if (suggestedVideoController.videoData.isNotEmpty) {
       suggestedVideoController.resetFocus();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (Get.context != null && suggestedVideoController.videoFocusNodes.isNotEmpty) {
+        if (Get.context != null &&
+            suggestedVideoController.videoFocusNodes.isNotEmpty) {
           FocusScope.of(Get.context!).requestFocus(
-            suggestedVideoController.videoFocusNodes[suggestedVideoController.currentlyPlayingIndex.value],
+            suggestedVideoController.videoFocusNodes[
+                suggestedVideoController.currentlyPlayingIndex.value],
           );
-          debugPrint('Reset focus to index: ${suggestedVideoController.currentlyPlayingIndex.value}');
+          debugPrint(
+              'Reset focus to index: ${suggestedVideoController.currentlyPlayingIndex.value}');
           suggestedVideoController.update();
           Get.forceAppUpdate();
         }
@@ -250,8 +261,12 @@ class ScreenPlayerController extends GetxController {
     suggestedVideoController.currentlyPlayingIndex.value = 0;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (Get.context != null && suggestedVideoController.videoFocusNodes.isNotEmpty) {
-        FocusScope.of(Get.context!).requestFocus(suggestedVideoController.videoFocusNodes[0]);
+      if (Get.context != null &&
+          suggestedVideoController.videoFocusNodes.isNotEmpty &&
+          suggestedVideoController.scrollController.hasClients
+      ) {
+        FocusScope.of(Get.context!)
+            .requestFocus(suggestedVideoController.videoFocusNodes[0]);
         _adjustScrollPosition(Get.context!);
         debugPrint('Focused first card at index: 0');
         update();
@@ -261,48 +276,73 @@ class ScreenPlayerController extends GetxController {
     });
   }
 
+  // void _startLongPressLeft() {
+  //   _longPressTimer?.cancel();
+  //   _longPressTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+  //     if (!_isLeftPressed) {
+  //       timer.cancel();
+  //       debugPrint('Long press Left stopped due to release');
+  //       return;
+  //     }
+  //     if (suggestedVideoController.currentlyPlayingIndex.value > 0) {
+  //       final prevIndex = suggestedVideoController.currentlyPlayingIndex.value;
+  //       suggestedVideoController.moveLeft();
+  //       _updateFocusAndScroll(prevIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Long press Left');
+  //     } else {
+  //       timer.cancel();
+  //       debugPrint('Long press Left stopped at start');
+  //     }
+  //   });
+  // }
+  //
+  // void _startLongPressRight() {
+  //   _longPressTimer?.cancel();
+  //   _longPressTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+  //     if (!_isRightPressed) {
+  //       timer.cancel();
+  //       debugPrint('Long press Right stopped due to release');
+  //       return;
+  //     }
+  //     if (suggestedVideoController.currentlyPlayingIndex.value < suggestedVideoController.videoData.length - 1) {
+  //       final prevIndex = suggestedVideoController.currentlyPlayingIndex.value;
+  //       suggestedVideoController.moveRight();
+  //       _updateFocusAndScroll(prevIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Long press Right');
+  //     } else {
+  //       timer.cancel();
+  //       debugPrint('Long press Right stopped at end');
+  //     }
+  //   });
+  // }
   void _startLongPressLeft() {
     _longPressTimer?.cancel();
-    _longPressTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      if (!_isLeftPressed) {
+    _longPressTimer =
+        Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (!_isLeftPressed || !suggestedVideoController.canMoveLeft) {
         timer.cancel();
-        debugPrint('Long press Left stopped due to release');
         return;
       }
-      if (suggestedVideoController.currentlyPlayingIndex.value > 0) {
-        final prevIndex = suggestedVideoController.currentlyPlayingIndex.value;
-        suggestedVideoController.moveLeft();
-        _updateFocusAndScroll(prevIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Long press Left');
-      } else {
-        timer.cancel();
-        debugPrint('Long press Left stopped at start');
-      }
+      suggestedVideoController.moveLeft();
     });
   }
 
   void _startLongPressRight() {
     _longPressTimer?.cancel();
-    _longPressTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
-      if (!_isRightPressed) {
+    _longPressTimer =
+        Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (!_isRightPressed || !suggestedVideoController.canMoveRight) {
         timer.cancel();
-        debugPrint('Long press Right stopped due to release');
         return;
       }
-      if (suggestedVideoController.currentlyPlayingIndex.value < suggestedVideoController.videoData.length - 1) {
-        final prevIndex = suggestedVideoController.currentlyPlayingIndex.value;
-        suggestedVideoController.moveRight();
-        _updateFocusAndScroll(prevIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Long press Right');
-      } else {
-        timer.cancel();
-        debugPrint('Long press Right stopped at end');
-      }
+      suggestedVideoController.moveRight();
     });
   }
 
   void _updateFocusAndScroll(int prevIndex, int newIndex, String direction) {
-    if (Get.context != null && suggestedVideoController.videoFocusNodes.isNotEmpty) {
+    if (Get.context != null &&
+        suggestedVideoController.videoFocusNodes.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        FocusScope.of(Get.context!).requestFocus(suggestedVideoController.videoFocusNodes[newIndex]);
+        FocusScope.of(Get.context!)
+            .requestFocus(suggestedVideoController.videoFocusNodes[newIndex]);
         debugPrint('$direction - Forced focus on index: $newIndex');
       });
       debugPrint('$direction - Moved from $prevIndex to $newIndex');
@@ -329,9 +369,12 @@ class ScreenPlayerController extends GetxController {
           } else if (menuButtonFocus.hasFocus) {
             showPopupMenu(Get.context!);
             debugPrint('Enter pressed - Menu opened');
-          } else if (suggestedVideoController.videoFocusNodes.isNotEmpty && showControls.value) {
-            final currentIndex = suggestedVideoController.currentlyPlayingIndex.value;
-            debugPrint('Video card selected at index $currentIndex (controls visible)');
+          } else if (suggestedVideoController.videoFocusNodes.isNotEmpty &&
+              showControls.value) {
+            final currentIndex =
+                suggestedVideoController.currentlyPlayingIndex.value;
+            debugPrint(
+                'Video card selected at index $currentIndex (controls visible)');
             // Construct ProgramDetails and call onVideoTap directly
             final video = suggestedVideoController.videoData[currentIndex];
             final program = video['program'] ?? {};
@@ -342,14 +385,16 @@ class ScreenPlayerController extends GetxController {
               title: program['program'] ?? 'Unknown Program',
               videoUrl: video['url'] ?? '',
             );
-            debugPrint('Playing video at index $currentIndex: ${programDetails.videoUrl}');
+            debugPrint(
+                'Playing video at index $currentIndex: ${programDetails.videoUrl}');
             _onVideoTap(programDetails);
             // Hide controls explicitly
             showControls.value = false;
             update();
             Get.forceAppUpdate();
           } else {
-            debugPrint('No video focus or controls not visible - toggling controls');
+            debugPrint(
+                'No video focus or controls not visible - toggling controls');
             showControls.value = !showControls.value;
             if (showControls.value) {
               debugPrint('Controls shown, focusing first card');
@@ -368,6 +413,7 @@ class ScreenPlayerController extends GetxController {
           break;
 
         case LogicalKeyboardKey.arrowUp:
+          suggestedVideoController.hideSuggestedVideoList(false);
           showControls.value = true;
           isTopBarFocused.value = true;
           FocusScope.of(Get.context!).requestFocus(liveButtonFocus);
@@ -377,14 +423,18 @@ class ScreenPlayerController extends GetxController {
           break;
 
         case LogicalKeyboardKey.arrowDown:
+          suggestedVideoController.hideSuggestedVideoList(true);
           showControls.value = true;
           if (liveButtonFocus.hasFocus) {
             FocusScope.of(Get.context!).requestFocus(menuButtonFocus);
             isLiveButtonFocused.value = false;
             isTopBarFocused.value = true;
             debugPrint('Down pressed - Menu button focused');
-          } else if (menuButtonFocus.hasFocus && suggestedVideoController.videoData.isNotEmpty) {
-            FocusScope.of(Get.context!).requestFocus(suggestedVideoController.videoFocusNodes[suggestedVideoController.currentlyPlayingIndex.value]);
+          } else if (menuButtonFocus.hasFocus &&
+              suggestedVideoController.videoData.isNotEmpty) {
+            FocusScope.of(Get.context!).requestFocus(
+                suggestedVideoController.videoFocusNodes[
+                    suggestedVideoController.currentlyPlayingIndex.value]);
             isTopBarFocused.value = false;
             debugPrint('Down pressed - Suggested video focused');
           }
@@ -392,42 +442,57 @@ class ScreenPlayerController extends GetxController {
           break;
 
         case LogicalKeyboardKey.arrowLeft:
-          if (!isTopBarFocused.value && suggestedVideoController.videoData.isNotEmpty) {
-            _isLeftPressed = true;
-            showControls.value = true;
-            _longPressStartTimer?.cancel();
-            if (suggestedVideoController.currentlyPlayingIndex.value > 0) {
-              final previousIndex = suggestedVideoController.currentlyPlayingIndex.value;
-              suggestedVideoController.moveLeft();
-              _updateFocusAndScroll(previousIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Single tap Left');
-              debugPrint('Single tap Left - Moved from $previousIndex to ${suggestedVideoController.currentlyPlayingIndex.value}');
-            }
-            _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
-              if (_isLeftPressed) {
-                _startLongPressLeft();
-              }
-            });
+          if (!isTopBarFocused.value &&
+              suggestedVideoController.videoData.isNotEmpty&&
+              suggestedVideoController.scrollController.hasClients) {
+            _handleLeftMovement();
           }
           break;
 
         case LogicalKeyboardKey.arrowRight:
-          if (!isTopBarFocused.value && suggestedVideoController.videoData.isNotEmpty) {
-            _isRightPressed = true;
-            showControls.value = true;
-            _longPressStartTimer?.cancel();
-            if (suggestedVideoController.currentlyPlayingIndex.value < suggestedVideoController.videoData.length - 1) {
-              final previousIndex = suggestedVideoController.currentlyPlayingIndex.value;
-              suggestedVideoController.moveRight();
-              _updateFocusAndScroll(previousIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Single tap Right');
-              debugPrint('Single tap Right - Moved from $previousIndex to ${suggestedVideoController.currentlyPlayingIndex.value}');
-            }
-            _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
-              if (_isRightPressed) {
-                _startLongPressRight();
-              }
-            });
+          if (!isTopBarFocused.value &&
+              suggestedVideoController.videoData.isNotEmpty&&
+              suggestedVideoController.scrollController.hasClients) {
+            _handleRightMovement();
           }
           break;
+        // case LogicalKeyboardKey.arrowLeft:
+        //   if (!isTopBarFocused.value && suggestedVideoController.videoData.isNotEmpty) {
+        //     _isLeftPressed = true;
+        //     showControls.value = true;
+        //     _longPressStartTimer?.cancel();
+        //     if (suggestedVideoController.currentlyPlayingIndex.value > 0) {
+        //       final previousIndex = suggestedVideoController.currentlyPlayingIndex.value;
+        //       suggestedVideoController.moveLeft();
+        //       _updateFocusAndScroll(previousIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Single tap Left');
+        //       debugPrint('Single tap Left - Moved from $previousIndex to ${suggestedVideoController.currentlyPlayingIndex.value}');
+        //     }
+        //     _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
+        //       if (_isLeftPressed) {
+        //         _startLongPressLeft();
+        //       }
+        //     });
+        //   }
+        //   break;
+        //
+        // case LogicalKeyboardKey.arrowRight:
+        //   if (!isTopBarFocused.value && suggestedVideoController.videoData.isNotEmpty) {
+        //     _isRightPressed = true;
+        //     showControls.value = true;
+        //     _longPressStartTimer?.cancel();
+        //     if (suggestedVideoController.currentlyPlayingIndex.value < suggestedVideoController.videoData.length - 1) {
+        //       final previousIndex = suggestedVideoController.currentlyPlayingIndex.value;
+        //       suggestedVideoController.moveRight();
+        //       _updateFocusAndScroll(previousIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Single tap Right');
+        //       debugPrint('Single tap Right - Moved from $previousIndex to ${suggestedVideoController.currentlyPlayingIndex.value}');
+        //     }
+        //     _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
+        //       if (_isRightPressed) {
+        //         _startLongPressRight();
+        //       }
+        //     });
+        //   }
+        //   break;
 
         case LogicalKeyboardKey.mediaFastForward:
         case LogicalKeyboardKey.mediaTrackNext:
@@ -459,10 +524,29 @@ class ScreenPlayerController extends GetxController {
 
         case LogicalKeyboardKey.backspace:
         case LogicalKeyboardKey.escape:
+          // if (!isLive.value) {
+          //   switchToLive();
+          //   debugPrint('Back pressed - Switched to live video');
+          // } else if (isLive.value && showControls.value) {
+          //   showControls.value = false;
+          //   isTopBarFocused.value = false;
+          //   isLiveButtonFocused.value = false;
+          //   debugPrint('Back pressed - Controls hidden');
+          // } else if (isLive.value && isFullScreen.value) {
+          //   toggleFullScreen();
+          //   debugPrint('Back pressed - Exited fullscreen');
+          // } else if (isLive.value) {
+          //   _showExitDialog();
+          //   debugPrint('Back pressed - Showing exit dialog');
+          // }
+          // update();
+          // break;
           if (!isLive.value) {
             switchToLive();
-            debugPrint('Back pressed - Switched to live video');
-          } else if (isLive.value && showControls.value) {
+            update();
+            return;
+          }
+          if (isLive.value && showControls.value) {
             showControls.value = false;
             isTopBarFocused.value = false;
             isLiveButtonFocused.value = false;
@@ -490,10 +574,14 @@ class ScreenPlayerController extends GetxController {
           _isRightPressed = false;
           _longPressStartTimer?.cancel();
           _longPressTimer?.cancel();
-          if (suggestedVideoController.videoData.isNotEmpty && Get.context != null) {
-            FocusScope.of(Get.context!).requestFocus(suggestedVideoController.videoFocusNodes[suggestedVideoController.currentlyPlayingIndex.value]);
+          if (suggestedVideoController.videoData.isNotEmpty &&
+              Get.context != null) {
+            FocusScope.of(Get.context!).requestFocus(
+                suggestedVideoController.videoFocusNodes[
+                    suggestedVideoController.currentlyPlayingIndex.value]);
             _adjustScrollPosition(Get.context!);
-            debugPrint('Right released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
+            debugPrint(
+                'Right released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
             update();
             suggestedVideoController.update();
             Get.forceAppUpdate();
@@ -503,10 +591,14 @@ class ScreenPlayerController extends GetxController {
           _isLeftPressed = false;
           _longPressStartTimer?.cancel();
           _longPressTimer?.cancel();
-          if (suggestedVideoController.videoData.isNotEmpty && Get.context != null) {
-            FocusScope.of(Get.context!).requestFocus(suggestedVideoController.videoFocusNodes[suggestedVideoController.currentlyPlayingIndex.value]);
+          if (suggestedVideoController.videoData.isNotEmpty &&
+              Get.context != null) {
+            FocusScope.of(Get.context!).requestFocus(
+                suggestedVideoController.videoFocusNodes[
+                    suggestedVideoController.currentlyPlayingIndex.value]);
             _adjustScrollPosition(Get.context!);
-            debugPrint('Left released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
+            debugPrint(
+                'Left released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
             update();
             suggestedVideoController.update();
             Get.forceAppUpdate();
@@ -548,18 +640,28 @@ class ScreenPlayerController extends GetxController {
   }
 
   void _adjustScrollPosition(BuildContext context) {
+    if (!suggestedVideoController.scrollController.hasClients) {
+      debugPrint("ScrollController not attached, skipping adjustment");
+      return;
+    }
     const double cardWidth = 180 + 16;
-    final ScrollController scrollController = suggestedVideoController.scrollController;
+    final ScrollController scrollController =
+        suggestedVideoController.scrollController;
     final int index = suggestedVideoController.currentlyPlayingIndex.value;
 
-    final targetOffset = index * cardWidth - (MediaQuery.of(context).size.width / 2) + (cardWidth / 2);
-    scrollController.animateTo(
+    final targetOffset = index * cardWidth -
+        (MediaQuery.of(context).size.width / 2) +
+        (cardWidth / 2);
+    scrollController
+        .animateTo(
       targetOffset.clamp(0.0, scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-    ).then((_) {
+    )
+        .then((_) {
       if (suggestedVideoController.videoFocusNodes.isNotEmpty) {
-        FocusScope.of(context).requestFocus(suggestedVideoController.videoFocusNodes[index]);
+        FocusScope.of(context)
+            .requestFocus(suggestedVideoController.videoFocusNodes[index]);
         update();
         suggestedVideoController.update();
         Get.forceAppUpdate();
@@ -570,7 +672,8 @@ class ScreenPlayerController extends GetxController {
   }
 
   void showPopupMenu(BuildContext context) {
-    final RenderBox? button = menuButtonFocus.context?.findRenderObject() as RenderBox?;
+    final RenderBox? button =
+        menuButtonFocus.context?.findRenderObject() as RenderBox?;
     if (button == null) return;
     final Offset offset = button.localToGlobal(Offset.zero);
     showMenu(
@@ -627,7 +730,8 @@ class ScreenPlayerController extends GetxController {
         PopupMenuItem(
           value: 'https://mercyott.com/hls_output/master.m3u8',
           child: const Text('Auto'),
-          onTap: () => setQuality('https://mercyott.com/hls_output/master.m3u8'),
+          onTap: () =>
+              setQuality('https://mercyott.com/hls_output/master.m3u8'),
         ),
         PopupMenuItem(
           value: 'https://mercyott.com/hls_output/360p.m3u8',
@@ -647,6 +751,55 @@ class ScreenPlayerController extends GetxController {
       ],
     );
   }
+
+  /// shivanshu added
+  void _handleLeftMovement() {
+    _isLeftPressed = true;
+    showControls.value = true;
+    _longPressStartTimer?.cancel();
+
+    // Immediate single press action
+    if (suggestedVideoController.canMoveLeft) {
+      final prevIndex = suggestedVideoController.currentlyPlayingIndex.value;
+      suggestedVideoController.moveLeft();
+      _updateFocusAndScroll(
+          prevIndex,
+          suggestedVideoController.currentlyPlayingIndex.value,
+          'Single tap Left');
+    }
+
+    // Configure long press behavior
+    _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
+      if (_isLeftPressed) {
+        _startLongPressLeft();
+      }
+    });
+  }
+
+  void _handleRightMovement() {
+    _isRightPressed = true;
+    showControls.value = true;
+    _longPressStartTimer?.cancel();
+
+    // Immediate single press action
+    if (suggestedVideoController.canMoveRight) {
+      final prevIndex = suggestedVideoController.currentlyPlayingIndex.value;
+      suggestedVideoController.moveRight();
+      _updateFocusAndScroll(
+          prevIndex,
+          suggestedVideoController.currentlyPlayingIndex.value,
+          'Single tap Right');
+    }
+
+    // Configure long press behavior
+    _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
+      if (_isRightPressed) {
+        _startLongPressRight();
+      }
+    });
+  }
+
+  /// shivanshu added
 
   @override
   void onClose() {
@@ -673,7 +826,9 @@ class ScreenPlayerController extends GetxController {
   }
 
   double getProgress() {
-    if (_videoPlayerController == null || _videoPlayerController!.value.duration.inSeconds == 0) return 0.0;
-    return _videoPlayerController!.value.position.inSeconds / _videoPlayerController!.value.duration.inSeconds;
+    if (_videoPlayerController == null ||
+        _videoPlayerController!.value.duration.inSeconds == 0) return 0.0;
+    return _videoPlayerController!.value.position.inSeconds /
+        _videoPlayerController!.value.duration.inSeconds;
   }
 }

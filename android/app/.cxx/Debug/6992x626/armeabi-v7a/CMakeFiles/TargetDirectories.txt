@@ -1,0 +1,2 @@
+/Users/cotginanalytics/StudioProjects/mercy_ott/android/app/.cxx/Debug/6992x626/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/cotginanalytics/StudioProjects/mercy_ott/android/app/.cxx/Debug/6992x626/armeabi-v7a/CMakeFiles/rebuild_cache.dir

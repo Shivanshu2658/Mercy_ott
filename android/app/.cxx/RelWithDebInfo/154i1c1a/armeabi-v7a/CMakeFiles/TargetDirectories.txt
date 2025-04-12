@@ -1,0 +1,2 @@
+/Users/shivanshuyadav/StudioProjects/mercy_ott/android/app/.cxx/RelWithDebInfo/154i1c1a/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/shivanshuyadav/StudioProjects/mercy_ott/android/app/.cxx/RelWithDebInfo/154i1c1a/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,2 @@
+/Users/cotginanalytics/StudioProjects/mercy_ott/android/app/.cxx/Debug/6992x626/x86/CMakeFiles/edit_cache.dir
+/Users/cotginanalytics/StudioProjects/mercy_ott/android/app/.cxx/Debug/6992x626/x86/CMakeFiles/rebuild_cache.dir

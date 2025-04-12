@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:mercy_tv_app/API/dataModel.dart';
 import 'package:mercy_tv_app/Controller/screenplayer_controller.dart';
 
+import 'SuggestedVideoController.dart';
+
 class HomeController extends GetxController {
   var currentVideoUrl = 'https://mercyott.com/hls_output/master.m3u8'.obs;
   var isLiveStream = true.obs; // Start as live
@@ -16,12 +18,25 @@ class HomeController extends GetxController {
     playerController.initializePlayer(currentVideoUrl.value, live: isLiveStream.value);
   }
 
+  // void playVideo(ProgramDetails programDetails) { // Shivanshu commented since it is not having focus reset part
+  //   if (programDetails.videoUrl == currentVideoUrl.value) return;
+  //
+  //   currentVideoUrl.value = programDetails.videoUrl;
+  //   isLiveStream.value = programDetails.videoUrl.contains(".m3u8");
+  //   playerController.initializePlayer(currentVideoUrl.value, live: isLiveStream.value);
+  // }
+  // In HomeController
   void playVideo(ProgramDetails programDetails) {
-    if (programDetails.videoUrl == currentVideoUrl.value) return;
+    if (programDetails.videoUrl == currentVideoUrl.value) {
+      // If same video, just update focus
+      Get.find<SuggestedVideoController>().resetFocus();
+      return;
+    }
 
     currentVideoUrl.value = programDetails.videoUrl;
     isLiveStream.value = programDetails.videoUrl.contains(".m3u8");
-    playerController.initializePlayer(currentVideoUrl.value, live: isLiveStream.value);
+    playerController.initializePlayer(currentVideoUrl.value,
+        live: isLiveStream.value);
   }
 
   @override

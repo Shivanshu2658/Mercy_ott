@@ -5,19 +5,24 @@ import 'package:mercy_tv_app/Colors/custom_color.dart';
 import 'package:mercy_tv_app/API/dataModel.dart';
 import 'package:mercy_tv_app/Controller/SuggestedVideoController.dart';
 
+import '../Controller/screenplayer_controller.dart';
+
 class SuggestedVideoCard extends StatelessWidget {
   final void Function(ProgramDetails) onVideoTap;
   SuggestedVideoCard({super.key, required this.onVideoTap});
 
-  final SuggestedVideoController controller = Get.find<SuggestedVideoController>();
+  final SuggestedVideoController controller =
+      Get.find<SuggestedVideoController>();
 
   static const double cardWidth = 180 + 16;
+
 
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      debugPrint('SuggestedVideoCard rebuilding for index: ${controller.currentlyPlayingIndex.value}');
-      
+      debugPrint(
+          'SuggestedVideoCard rebuilding for index: ${controller.currentlyPlayingIndex.value}');
+
       if (controller.isLoading.value) {
         return const Center(child: CircularProgressIndicator());
       } else if (controller.errorMessage.isNotEmpty) {
@@ -30,7 +35,8 @@ class SuggestedVideoCard extends StatelessWidget {
           child: ListView.builder(
             controller: controller.scrollController,
             scrollDirection: Axis.horizontal,
-            physics: const NeverScrollableScrollPhysics(),
+            physics: const ScrollPhysics(),
+            // physics: const NeverScrollableScrollPhysics(),
             itemCount: controller.videoData.length,
             itemBuilder: (context, index) {
               var video = controller.videoData[index];
@@ -80,7 +86,8 @@ class VideoThumbnailCard extends StatelessWidget {
       int hour = int.parse(timeParts[0]);
       int minute = int.parse(timeParts[1]);
 
-      String formattedDate = "${parsedDate.day} ${_getMonth(parsedDate.month)} ${parsedDate.year}";
+      String formattedDate =
+          "${parsedDate.day} ${_getMonth(parsedDate.month)} ${parsedDate.year}";
       String formattedTime = _formatTime(hour, minute);
       return "$formattedDate | $formattedTime";
     } catch (e) {
@@ -96,7 +103,21 @@ class VideoThumbnailCard extends StatelessWidget {
   }
 
   static String _getMonth(int month) {
-    const months = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const months = [
+      "",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
     return months[month];
   }
 
@@ -106,30 +127,76 @@ class VideoThumbnailCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Focus(
         focusNode: focusNode,
-        onFocusChange: (hasFocus) {
+        onFocusChange: (hasFocus) async {
           if (hasFocus) {
             final controller = Get.find<SuggestedVideoController>();
-            controller.currentlyPlayingIndex.value = controller.videoFocusNodes.indexOf(focusNode);
-            debugPrint('Focus changed to index: ${controller.currentlyPlayingIndex.value}');
-            controller.update();
-            Get.forceAppUpdate();
+            controller.currentlyPlayingIndex.value =
+                controller.videoFocusNodes.indexOf(focusNode);
+            // int newIndex = controller.videoFocusNodes.indexOf(focusNode);
+            // controller.currentlyPlayingIndex.value = newIndex;
+            await controller
+                .scrollToIndex(controller.currentlyPlayingIndex.value);
           }
         },
         onKeyEvent: (node, event) {
+          final controller = Get.find<SuggestedVideoController>();
           if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+              // Close the suggested video list
+              return KeyEventResult.handled;
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+              return KeyEventResult.handled;
+            }
+
+            if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+              controller.moveRight();
+              return KeyEventResult.handled;
+            } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+              controller.moveLeft();
+              return KeyEventResult.handled;
+            } else if (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter) {
               onTap(programDetails);
               return KeyEventResult.handled;
             }
+          } else if (event is KeyUpEvent) {
+            // controller.scrollToIndex(controller.currentlyPlayingIndex.value);
+            Get.find<SuggestedVideoController>().restoreFocus();
           }
           return KeyEventResult.ignored;
         },
+        // onKeyEvent: (node, event) {
+        //   if (event is KeyDownEvent) {
+        //     final controller = Get.find<SuggestedVideoController>();
+        //
+        //     // Block up/down arrow keys from affecting this widget
+        //     if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+        //         event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        //       return KeyEventResult.handled;
+        //     }
+        //
+        //     if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        //       controller.moveRight();
+        //       return KeyEventResult.handled;
+        //     } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+        //       controller.moveLeft();
+        //       return KeyEventResult.handled;
+        //     } else if (event.logicalKey == LogicalKeyboardKey.select ||
+        //         event.logicalKey == LogicalKeyboardKey.enter) {
+        //       onTap(programDetails);
+        //       return KeyEventResult.handled;
+        //     }
+        //   }
+        //   return KeyEventResult.ignored;
+        // },
+
         child: GestureDetector(
           onTap: () => onTap(programDetails),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
-              border: isFocused ? Border.all(color: Colors.yellow, width: 3) : null,
+              border:
+                  isFocused ? Border.all(color: Colors.yellow, width: 3) : null,
               borderRadius: BorderRadius.circular(12),
               boxShadow: isFocused
                   ? [
@@ -187,11 +254,16 @@ class VideoThumbnailCard extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(Icons.history, color: CustomColors.buttonColor, size: 18),
+                          const Icon(Icons.history,
+                              color: CustomColors.buttonColor, size: 18),
                           const SizedBox(width: 5),
                           Text(
-                            formatDateTime(programDetails.date, programDetails.time),
-                            style: const TextStyle(color: Colors.white, fontSize: 12, fontFamily: 'Mulish-Medium'),
+                            formatDateTime(
+                                programDetails.date, programDetails.time),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontFamily: 'Mulish-Medium'),
                           ),
                         ],
                       ),
