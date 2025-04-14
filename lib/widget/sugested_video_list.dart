@@ -128,7 +128,7 @@ class VideoThumbnailCard extends StatelessWidget {
       child: Focus(
         focusNode: focusNode,
         onFocusChange: (hasFocus) async {
-          if (hasFocus) {
+          if (hasFocus ) {
             final controller = Get.find<SuggestedVideoController>();
             controller.currentlyPlayingIndex.value =
                 controller.videoFocusNodes.indexOf(focusNode);

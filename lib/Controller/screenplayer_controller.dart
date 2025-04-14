@@ -118,9 +118,12 @@ class ScreenPlayerController extends GetxController {
     if (_videoPlayerController != null) {
       if (_videoPlayerController!.value.isPlaying) {
         _videoPlayerController!.pause();
+        Get.find<ScreenPlayerController>().showControls.value = true;
+
         debugPrint('⏸️ Video paused');
       } else {
         _videoPlayerController!.play();
+        Get.find<ScreenPlayerController>().showControls.value = false;
         debugPrint('▶️ Video playing');
       }
       resetSuggestedVideoFocus();
@@ -206,6 +209,7 @@ class ScreenPlayerController extends GetxController {
   }
 
   void switchToLive() {
+    print("{}{}{}{}{}{}{}{}{}{}");
     initializePlayer(_defaultLiveUrl, live: true);
     showControls.value = true;
     isTopBarFocused.value = false;
@@ -418,7 +422,7 @@ class ScreenPlayerController extends GetxController {
           isTopBarFocused.value = true;
           FocusScope.of(Get.context!).requestFocus(liveButtonFocus);
           isLiveButtonFocused.value = true;
-          debugPrint('Up pressed - Live button focused');
+          debugPrint('Up pressed - Live button focused11111');
           update();
           break;
 
@@ -524,6 +528,15 @@ class ScreenPlayerController extends GetxController {
 
         case LogicalKeyboardKey.backspace:
         case LogicalKeyboardKey.escape:
+          final suggestedController = Get.find<SuggestedVideoController>();
+
+          // Close suggested list if visible
+          if (suggestedController.showSuggestedList.value) {
+            suggestedController.hideSuggestedVideoList(false); // Hide the list
+            update();
+            return; // Exit after closing the list
+          }
+
           // if (!isLive.value) {
           //   switchToLive();
           //   debugPrint('Back pressed - Switched to live video');

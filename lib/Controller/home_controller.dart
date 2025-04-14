@@ -18,14 +18,6 @@ class HomeController extends GetxController {
     playerController.initializePlayer(currentVideoUrl.value, live: isLiveStream.value);
   }
 
-  // void playVideo(ProgramDetails programDetails) { // Shivanshu commented since it is not having focus reset part
-  //   if (programDetails.videoUrl == currentVideoUrl.value) return;
-  //
-  //   currentVideoUrl.value = programDetails.videoUrl;
-  //   isLiveStream.value = programDetails.videoUrl.contains(".m3u8");
-  //   playerController.initializePlayer(currentVideoUrl.value, live: isLiveStream.value);
-  // }
-  // In HomeController
   void playVideo(ProgramDetails programDetails) {
     if (programDetails.videoUrl == currentVideoUrl.value) {
       // If same video, just update focus
@@ -35,6 +27,7 @@ class HomeController extends GetxController {
 
     currentVideoUrl.value = programDetails.videoUrl;
     isLiveStream.value = programDetails.videoUrl.contains(".m3u8");
+
     playerController.initializePlayer(currentVideoUrl.value,
         live: isLiveStream.value);
   }
@@ -46,3 +39,16 @@ class HomeController extends GetxController {
     super.onClose();
   }
 }
+
+
+
+
+
+// void playVideo(ProgramDetails programDetails) { // Shivanshu commented since it is not having focus reset part
+//   if (programDetails.videoUrl == currentVideoUrl.value) return;
+//
+//   currentVideoUrl.value = programDetails.videoUrl;
+//   isLiveStream.value = programDetails.videoUrl.contains(".m3u8");
+//   playerController.initializePlayer(currentVideoUrl.value, live: isLiveStream.value);
+// }
+// In HomeController

@@ -28,9 +28,16 @@ class SuggestedVideoController extends GetxController {
     super.onInit();
   }
 
-  void hideSuggestedVideoList(bool changes) {
-    showSuggestedList.value = changes;
-    print("---===== ${currentlyPlayingIndex.value}");
+  // void hideSuggestedVideoList(bool visible) {
+  //   showSuggestedList.value = visible;
+  //   debugPrint("Suggested list visibility: $visible");
+  // }
+  void hideSuggestedVideoList(bool visible) {
+    showSuggestedList.value = visible;
+    // If hiding the list, also hide controls if needed
+    if (!visible) {
+      Get.find<ScreenPlayerController>().showControls.value = false;
+    }
   }
 
 

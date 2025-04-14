@@ -11,14 +11,52 @@ import 'package:video_player/video_player.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
+  // Future<bool> _onWillPop(BuildContext context) async {
+  //   final playerController = Get.find<ScreenPlayerController>();
+  //
+  //   if (!playerController.isLive.value) {
+  //     playerController.switchToLive();
+  //     return false;
+  //   }
+  //
+  //   final bool? result = await Get.dialog(
+  //     AlertDialog(
+  //       title: const Text("Exit App"),
+  //       content: const Text("Do you really want to exit?"),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Get.back(result: false),
+  //           child: const Text("No"),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Get.back(result: true),
+  //           child: const Text("Yes"),
+  //         ),
+  //       ],
+  //     ),
+  //     barrierDismissible: false,
+  //   );
+  //
+  //   return result ?? false;
+  // }
+
   Future<bool> _onWillPop(BuildContext context) async {
     final playerController = Get.find<ScreenPlayerController>();
+    final suggestedController = Get.find<SuggestedVideoController>();
 
+    // First check if suggested video list is visible
+    if (suggestedController.showSuggestedList.value) {
+      suggestedController.hideSuggestedVideoList(false);
+      return false; // Prevent exiting app, just close the list
+    }
+
+    // Then handle live/video state
     if (!playerController.isLive.value) {
       playerController.switchToLive();
       return false;
     }
 
+    // Finally show exit dialog if we're in live mode
     final bool? result = await Get.dialog(
       AlertDialog(
         title: const Text("Exit App"),
@@ -112,7 +150,12 @@ class HomePage extends StatelessWidget {
                               playerController.showControls.value ? 1.0 : 0.0,
                           duration: const Duration(milliseconds: 300),
                           child: Container(
-                            color: Colors.black54,
+                            color: Get.find<SuggestedVideoController>()
+                                    .showSuggestedList
+                                    .value
+                                ? Colors.black54
+                                : Colors.transparent,
+                            // color: Colors.black54,
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -130,12 +173,6 @@ class HomePage extends StatelessWidget {
                                               SuggestedVideoController>();
                                           if (event is KeyDownEvent) {
                                             if (event.logicalKey ==
-                                                LogicalKeyboardKey.arrowUp) {
-                                              // Close the suggested video list
-                                              Get.find<SuggestedVideoController>().hideSuggestedVideoList(true);
-
-                                              return KeyEventResult.handled;
-                                            } else if (event.logicalKey ==
                                                 LogicalKeyboardKey.arrowLeft) {
                                               controller.moveLeft();
                                               return KeyEventResult.handled;
@@ -145,14 +182,15 @@ class HomePage extends StatelessWidget {
                                               return KeyEventResult.handled;
                                             } else if (event.logicalKey ==
                                                 LogicalKeyboardKey.arrowDown) {
-                                              Get.find<SuggestedVideoController>().hideSuggestedVideoList(false);
+                                              Get.find<
+                                                      SuggestedVideoController>()
+                                                  .hideSuggestedVideoList(
+                                                      false);
 
                                               return KeyEventResult.handled;
                                             }
                                           } else if (event is KeyUpEvent) {
-                                            // controller.scrollToIndex(controller.currentlyPlayingIndex.value);
-                                            Get.find<SuggestedVideoController>()
-                                                .restoreFocus();
+                                            controller.restoreFocus();
                                           }
                                           return KeyEventResult.ignored;
                                         },
@@ -180,11 +218,24 @@ class HomePage extends StatelessWidget {
                                                       BorderRadius.circular(20),
                                                 ),
                                                 child: TextButton(
-                                                  onPressed: playerController
-                                                          .isLive.value
-                                                      ? null
-                                                      : () => playerController
-                                                          .switchToLive(),
+                                                  onPressed: () {
+                                                    if (!playerController.isLive.value && playerController.isLiveButtonFocused.value) {
+                                                      playerController.switchToLive();
+                                                      print("If condition ()()(12121");
+                                                    }
+                                                    else{
+                                                      print("Else condition ()()(12121");
+                                                    }
+                                                    // else if(playerController.isLiveButtonFocused.value){
+                                                    //
+                                                    // }
+                                                  },
+
+                                                  // playerController
+                                                  //         .isLive.value
+                                                  //     ? null
+                                                  //     : () => playerController
+                                                  //         .switchToLive(),
                                                   style: TextButton.styleFrom(
                                                       padding: EdgeInsets.zero),
                                                   child: Text(
@@ -261,13 +312,13 @@ class HomePage extends StatelessWidget {
                                   ),
                                 ),
                                 ////
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Obx(() {
-                                    return Get.find<SuggestedVideoController>()
-                                            .showSuggestedList
-                                            .value
-                                        ? Column(
+                                Obx(() {
+                                  return Get.find<SuggestedVideoController>()
+                                          .showSuggestedList
+                                          .value
+                                      ? Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Column(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
                                               Container(
@@ -376,10 +427,10 @@ class HomePage extends StatelessWidget {
                                                 ],
                                               ),
                                             ],
-                                          )
-                                        : const SizedBox.shrink();
-                                  }),
-                                ),
+                                          ),
+                                        )
+                                      : const SizedBox.shrink();
+                                }),
                               ],
                             ),
                           ),
