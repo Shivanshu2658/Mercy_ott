@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mercy_tv_app"
+    namespace = "com.mercyott.tv"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.mercy_tv_app"
+        applicationId = "com.mercyott.tv"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -32,11 +32,19 @@ android {
         abortOnError false
     }
 
+
+    signingConfigs {
+        release {
+            keyAlias "upload"
+            keyPassword "MercyTV@2025"
+            storeFile file("/Users/shivanshuyadav/StudioProjects/mercy_ott/android/app/upload-keystore.jks")
+            storePassword "MercyTV@2025"
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -49,3 +57,4 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.18.1'
     implementation 'com.google.android.exoplayer:exoplayer-smoothstreaming:2.18.1'
 }
+

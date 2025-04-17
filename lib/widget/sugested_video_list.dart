@@ -138,40 +138,13 @@ class VideoThumbnailCard extends StatelessWidget {
                 .scrollToIndex(controller.currentlyPlayingIndex.value);
           }
         },
-        onKeyEvent: (node, event) {
-          final controller = Get.find<SuggestedVideoController>();
-          if (event is KeyDownEvent) {
-            if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-              // Close the suggested video list
-              return KeyEventResult.handled;
-            } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-              return KeyEventResult.handled;
-            }
-
-            if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-              controller.moveRight();
-              return KeyEventResult.handled;
-            } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-              controller.moveLeft();
-              return KeyEventResult.handled;
-            } else if (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter) {
-              onTap(programDetails);
-              return KeyEventResult.handled;
-            }
-          } else if (event is KeyUpEvent) {
-            // controller.scrollToIndex(controller.currentlyPlayingIndex.value);
-            Get.find<SuggestedVideoController>().restoreFocus();
-          }
-          return KeyEventResult.ignored;
-        },
         // onKeyEvent: (node, event) {
+        //   final controller = Get.find<SuggestedVideoController>();
         //   if (event is KeyDownEvent) {
-        //     final controller = Get.find<SuggestedVideoController>();
-        //
-        //     // Block up/down arrow keys from affecting this widget
-        //     if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
-        //         event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        //     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        //       // Close the suggested video list
+        //       return KeyEventResult.handled;
+        //     } else if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
         //       return KeyEventResult.handled;
         //     }
         //
@@ -186,6 +159,9 @@ class VideoThumbnailCard extends StatelessWidget {
         //       onTap(programDetails);
         //       return KeyEventResult.handled;
         //     }
+        //   } else if (event is KeyUpEvent) {
+        //     // controller.scrollToIndex(controller.currentlyPlayingIndex.value);
+        //     Get.find<SuggestedVideoController>().restoreFocus();
         //   }
         //   return KeyEventResult.ignored;
         // },

@@ -1,4 +1,4 @@
-package com.example.mercy_tv_app
+package com.mercyott.tv
 
 import io.flutter.embedding.android.FlutterActivity
 
