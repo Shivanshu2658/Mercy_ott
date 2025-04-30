@@ -13,7 +13,7 @@ class ScreenPlayerController extends GetxController {
 
   var isVideoInitialized = false.obs;
   var isBuffering = false.obs;
-  var showControls = false.obs;
+  var showControls = true.obs;
   var currentVideoUrl = ''.obs;
   var isFullScreen = false.obs;
   var isLive = false.obs;
