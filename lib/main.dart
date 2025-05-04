@@ -7,10 +7,10 @@ import 'package:mercy_tv_app/Controller/SuggestedVideoController.dart';
 import 'package:mercy_tv_app/Screens/Splash_screen.dart';
 
 void main() {
-  Get.put(SuggestedVideoController()); // Initialize first
+  Get.put(SuggestedVideoController());
   Get.put(
-      ScreenPlayerController()); // Then ScreenPlayerController, which depends on SuggestedVideoController
-  Get.put(HomeController()); // Finally HomeController
+      ScreenPlayerController());
+  Get.put(HomeController());
 
   runApp(MyApp());
 }
@@ -21,11 +21,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return
-      // Shortcuts(
-      //   shortcuts: <LogicalKeySet, Intent>{
-      //     LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
-      //   },
-      //   child:
+      Shortcuts(
+        shortcuts: <LogicalKeySet, Intent>{
+          LogicalKeySet(LogicalKeyboardKey.select): ActivateIntent(),
+        },
+        child:
     GetMaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
             highlightColor: Colors.yellow,
           ),
           home: SplashScreen(),
-        // )
+        )
     );
   }
 }

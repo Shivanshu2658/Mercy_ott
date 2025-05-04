@@ -133,15 +133,15 @@ class ScreenPlayerController extends GetxController {
     }
   }
 
-  void toggleFullScreen() {
-    isFullScreen.value = !isFullScreen.value;
-    if (isFullScreen.value) {
-      Get.to(() => ScreenPlayer(videoUrl: currentVideoUrl.value));
-    } else {
-      Get.back();
-    }
-    update();
-  }
+  // void toggleFullScreen() {
+  //   isFullScreen.value = !isFullScreen.value;
+  //   if (isFullScreen.value) {
+  //     Get.to(() => ScreenPlayer(videoUrl: currentVideoUrl.value));
+  //   } else {
+  //     Get.back();
+  //   }
+  //   update();
+  // }
 
   void seekForwardWithFeedback() {
     if (_videoPlayerController != null &&
@@ -224,14 +224,15 @@ class ScreenPlayerController extends GetxController {
       isLiveButtonFocused.value = false;
       isTopBarFocused.value = false;
       debugPrint('Screen tapped - Controls shown, focusing first card');
-      _focusFirstCard();
     } else {
       liveButtonFocus.unfocus();
       menuButtonFocus.unfocus();
       isLiveButtonFocused.value = false;
       isTopBarFocused.value = false;
+
       debugPrint('Screen tapped - Controls hidden');
     }
+    _focusFirstCard();
     update();
     suggestedVideoController.update();
     Get.forceAppUpdate();
@@ -267,11 +268,11 @@ class ScreenPlayerController extends GetxController {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (Get.context != null &&
           suggestedVideoController.videoFocusNodes.isNotEmpty &&
-          suggestedVideoController.scrollController.hasClients
-      ) {
+          suggestedVideoController.scrollController.hasClients) {
         FocusScope.of(Get.context!)
             .requestFocus(suggestedVideoController.videoFocusNodes[0]);
-        _adjustScrollPosition(Get.context!);
+        // _adjustScrollPosition(Get.context!);
+        resetFocusToFirstItem();
         debugPrint('Focused first card at index: 0');
         update();
         suggestedVideoController.update();
@@ -354,13 +355,32 @@ class ScreenPlayerController extends GetxController {
     }
   }
 
-  void handleKeyEvent(RawKeyEvent event) {
+// Add these at the top of your class
+  DateTime _lastArrowKeyPressTime = DateTime.now();
+  final Duration _arrowKeyCooldown =
+      Duration(milliseconds: 300); // Adjust if needed
+
+  KeyEventResult handleKeyEvent(RawKeyEvent event) {
     debugPrint('Key event: ${event.logicalKey}, Type: ${event.runtimeType}');
 
-    if (event is RawKeyDownEvent) {
+    // if (event is RawKeyDownEvent) {
+    if (event is RawKeyDownEvent && !event.repeat) {
+      // Throttle all arrow key events
+      final now = DateTime.now();
+      if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+          event.logicalKey == LogicalKeyboardKey.arrowDown ||
+          event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+          event.logicalKey == LogicalKeyboardKey.arrowRight) {
+        if (now.difference(_lastArrowKeyPressTime) < _arrowKeyCooldown) {
+          debugPrint('Arrow key ignored due to cooldown');
+          return KeyEventResult.handled;
+        }
+        _lastArrowKeyPressTime = now;
+      }
+
       if (event.repeat) {
         debugPrint('Ignoring repeat event');
-        return;
+        return KeyEventResult.handled;
       }
 
       switch (event.logicalKey) {
@@ -372,6 +392,8 @@ class ScreenPlayerController extends GetxController {
             debugPrint('Enter pressed - Switched to live');
           } else if (menuButtonFocus.hasFocus) {
             showPopupMenu(Get.context!);
+
+            ///
             debugPrint('Enter pressed - Menu opened');
           } else if (suggestedVideoController.videoFocusNodes.isNotEmpty &&
               showControls.value) {
@@ -394,6 +416,7 @@ class ScreenPlayerController extends GetxController {
             _onVideoTap(programDetails);
             // Hide controls explicitly
             showControls.value = false;
+
             update();
             Get.forceAppUpdate();
           } else {
@@ -402,7 +425,7 @@ class ScreenPlayerController extends GetxController {
             showControls.value = !showControls.value;
             if (showControls.value) {
               debugPrint('Controls shown, focusing first card');
-              _focusFirstCard();
+              // _focusFirstCard();
             } else {
               liveButtonFocus.unfocus();
               menuButtonFocus.unfocus();
@@ -410,6 +433,7 @@ class ScreenPlayerController extends GetxController {
               isTopBarFocused.value = false;
               debugPrint('Controls hidden');
             }
+            _focusFirstCard();
           }
           update();
           suggestedVideoController.update();
@@ -418,85 +442,80 @@ class ScreenPlayerController extends GetxController {
 
         case LogicalKeyboardKey.arrowUp:
           suggestedVideoController.hideSuggestedVideoList(false);
-          showControls.value = true;
-          isTopBarFocused.value = true;
-          FocusScope.of(Get.context!).requestFocus(liveButtonFocus);
-          isLiveButtonFocused.value = true;
-          debugPrint('Up pressed - Live button focused11111');
-          update();
+
+          /// if else shivanshu added
+          if (!isLiveButtonFocused.value) {
+            showControls.value = true;
+            isTopBarFocused.value = true;
+            FocusScope.of(Get.context!).requestFocus(liveButtonFocus);
+            isLiveButtonFocused.value = true;
+            debugPrint('Up pressed - Live button focused11111');
+            update();
+            break;
+          } else {
+            showControls.value = true;
+            isLiveButtonFocused.value = true;
+            isTopBarFocused.value = true;
+          }
           break;
 
         case LogicalKeyboardKey.arrowDown:
-          suggestedVideoController.hideSuggestedVideoList(true);
+
+          // suggestedVideoController.hideSuggestedVideoList(true);
           showControls.value = true;
+          // resetFocusToFirstItem();
+
           if (liveButtonFocus.hasFocus) {
-            FocusScope.of(Get.context!).requestFocus(menuButtonFocus);
+            // FocusScope.of(Get.context!).requestFocus(menuButtonFocus);
             isLiveButtonFocused.value = false;
             isTopBarFocused.value = true;
-            debugPrint('Down pressed - Menu button focused');
           } else if (menuButtonFocus.hasFocus &&
               suggestedVideoController.videoData.isNotEmpty) {
-            FocusScope.of(Get.context!).requestFocus(
-                suggestedVideoController.videoFocusNodes[
-                    suggestedVideoController.currentlyPlayingIndex.value]);
-            isTopBarFocused.value = false;
-            debugPrint('Down pressed - Suggested video focused');
+            isLiveButtonFocused.value = false;
+            isTopBarFocused.value = true;
+
+
+            // FocusScope.of(Get.context!).requestFocus(
+            //     suggestedVideoController.videoFocusNodes[
+            //         suggestedVideoController.currentlyPlayingIndex.value]);
           }
+          suggestedVideoController.hideSuggestedVideoList(true);
+          FocusScope.of(Get.context!).requestFocus(
+              suggestedVideoController.videoFocusNodes[
+              0]);
           update();
+          Get.forceAppUpdate();
           break;
 
         case LogicalKeyboardKey.arrowLeft:
+          final now = DateTime.now();
+          if (now.difference(_lastArrowKeyPressTime) < _arrowKeyCooldown) {
+            debugPrint('Arrow LEFT ignored due to cooldown');
+            return KeyEventResult.handled;
+          }
+          _lastArrowKeyPressTime = now;
+
           if (!isTopBarFocused.value &&
-              suggestedVideoController.videoData.isNotEmpty&&
+              suggestedVideoController.videoData.isNotEmpty &&
               suggestedVideoController.scrollController.hasClients) {
             _handleLeftMovement();
           }
           break;
 
         case LogicalKeyboardKey.arrowRight:
+          final now = DateTime.now();
+          if (now.difference(_lastArrowKeyPressTime) < _arrowKeyCooldown) {
+            debugPrint('Arrow RIGHT ignored due to cooldown');
+            return KeyEventResult.handled;
+          }
+          _lastArrowKeyPressTime = now;
+
           if (!isTopBarFocused.value &&
-              suggestedVideoController.videoData.isNotEmpty&&
+              suggestedVideoController.videoData.isNotEmpty &&
               suggestedVideoController.scrollController.hasClients) {
             _handleRightMovement();
           }
           break;
-        // case LogicalKeyboardKey.arrowLeft:
-        //   if (!isTopBarFocused.value && suggestedVideoController.videoData.isNotEmpty) {
-        //     _isLeftPressed = true;
-        //     showControls.value = true;
-        //     _longPressStartTimer?.cancel();
-        //     if (suggestedVideoController.currentlyPlayingIndex.value > 0) {
-        //       final previousIndex = suggestedVideoController.currentlyPlayingIndex.value;
-        //       suggestedVideoController.moveLeft();
-        //       _updateFocusAndScroll(previousIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Single tap Left');
-        //       debugPrint('Single tap Left - Moved from $previousIndex to ${suggestedVideoController.currentlyPlayingIndex.value}');
-        //     }
-        //     _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
-        //       if (_isLeftPressed) {
-        //         _startLongPressLeft();
-        //       }
-        //     });
-        //   }
-        //   break;
-        //
-        // case LogicalKeyboardKey.arrowRight:
-        //   if (!isTopBarFocused.value && suggestedVideoController.videoData.isNotEmpty) {
-        //     _isRightPressed = true;
-        //     showControls.value = true;
-        //     _longPressStartTimer?.cancel();
-        //     if (suggestedVideoController.currentlyPlayingIndex.value < suggestedVideoController.videoData.length - 1) {
-        //       final previousIndex = suggestedVideoController.currentlyPlayingIndex.value;
-        //       suggestedVideoController.moveRight();
-        //       _updateFocusAndScroll(previousIndex, suggestedVideoController.currentlyPlayingIndex.value, 'Single tap Right');
-        //       debugPrint('Single tap Right - Moved from $previousIndex to ${suggestedVideoController.currentlyPlayingIndex.value}');
-        //     }
-        //     _longPressStartTimer = Timer(const Duration(milliseconds: 300), () {
-        //       if (_isRightPressed) {
-        //         _startLongPressRight();
-        //       }
-        //     });
-        //   }
-        //   break;
 
         case LogicalKeyboardKey.mediaFastForward:
         case LogicalKeyboardKey.mediaTrackNext:
@@ -526,6 +545,7 @@ class ScreenPlayerController extends GetxController {
           debugPrint('Menu pressed - Focused Menu Button');
           break;
 
+        /// will work on this
         case LogicalKeyboardKey.backspace:
         case LogicalKeyboardKey.escape:
           final suggestedController = Get.find<SuggestedVideoController>();
@@ -534,30 +554,13 @@ class ScreenPlayerController extends GetxController {
           if (suggestedController.showSuggestedList.value) {
             suggestedController.hideSuggestedVideoList(false); // Hide the list
             update();
-            return; // Exit after closing the list
+            return KeyEventResult.handled; // Exit after closing the list
           }
 
-          // if (!isLive.value) {
-          //   switchToLive();
-          //   debugPrint('Back pressed - Switched to live video');
-          // } else if (isLive.value && showControls.value) {
-          //   showControls.value = false;
-          //   isTopBarFocused.value = false;
-          //   isLiveButtonFocused.value = false;
-          //   debugPrint('Back pressed - Controls hidden');
-          // } else if (isLive.value && isFullScreen.value) {
-          //   toggleFullScreen();
-          //   debugPrint('Back pressed - Exited fullscreen');
-          // } else if (isLive.value) {
-          //   _showExitDialog();
-          //   debugPrint('Back pressed - Showing exit dialog');
-          // }
-          // update();
-          // break;
           if (!isLive.value) {
             switchToLive();
             update();
-            return;
+            return KeyEventResult.handled;
           }
           if (isLive.value && showControls.value) {
             showControls.value = false;
@@ -565,7 +568,7 @@ class ScreenPlayerController extends GetxController {
             isLiveButtonFocused.value = false;
             debugPrint('Back pressed - Controls hidden');
           } else if (isLive.value && isFullScreen.value) {
-            toggleFullScreen();
+            // toggleFullScreen();
             debugPrint('Back pressed - Exited fullscreen');
           } else if (isLive.value) {
             _showExitDialog();
@@ -580,45 +583,49 @@ class ScreenPlayerController extends GetxController {
           debugPrint('Play/Pause pressed');
           break;
       }
-    } else if (event is RawKeyUpEvent) {
-      debugPrint('Key released: ${event.logicalKey}');
-      switch (event.logicalKey) {
-        case LogicalKeyboardKey.arrowRight:
-          _isRightPressed = false;
-          _longPressStartTimer?.cancel();
-          _longPressTimer?.cancel();
-          if (suggestedVideoController.videoData.isNotEmpty &&
-              Get.context != null) {
-            FocusScope.of(Get.context!).requestFocus(
-                suggestedVideoController.videoFocusNodes[
-                    suggestedVideoController.currentlyPlayingIndex.value]);
-            _adjustScrollPosition(Get.context!);
-            debugPrint(
-                'Right released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
-            update();
-            suggestedVideoController.update();
-            Get.forceAppUpdate();
-          }
-          break;
-        case LogicalKeyboardKey.arrowLeft:
-          _isLeftPressed = false;
-          _longPressStartTimer?.cancel();
-          _longPressTimer?.cancel();
-          if (suggestedVideoController.videoData.isNotEmpty &&
-              Get.context != null) {
-            FocusScope.of(Get.context!).requestFocus(
-                suggestedVideoController.videoFocusNodes[
-                    suggestedVideoController.currentlyPlayingIndex.value]);
-            _adjustScrollPosition(Get.context!);
-            debugPrint(
-                'Left released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
-            update();
-            suggestedVideoController.update();
-            Get.forceAppUpdate();
-          }
-          break;
-      }
     }
+
+    return KeyEventResult.ignored;
+
+    // else if (event is RawKeyUpEvent) {
+    //   debugPrint('Key released: ${event.logicalKey}');
+    //   switch (event.logicalKey) {
+    //     case LogicalKeyboardKey.arrowRight:
+    //       _isRightPressed = false;
+    //       _longPressStartTimer?.cancel();
+    //       _longPressTimer?.cancel();
+    //       if (suggestedVideoController.videoData.isNotEmpty &&
+    //           Get.context != null) {
+    //         FocusScope.of(Get.context!).requestFocus(
+    //             suggestedVideoController.videoFocusNodes[
+    //                 suggestedVideoController.currentlyPlayingIndex.value]);
+    //         _adjustScrollPosition(Get.context!);
+    //         debugPrint(
+    //             'Right released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
+    //         update();
+    //         suggestedVideoController.update();
+    //         Get.forceAppUpdate();
+    //       }
+    //       break;
+    //     case LogicalKeyboardKey.arrowLeft:
+    //       _isLeftPressed = false;
+    //       _longPressStartTimer?.cancel();
+    //       _longPressTimer?.cancel();
+    //       if (suggestedVideoController.videoData.isNotEmpty &&
+    //           Get.context != null) {
+    //         FocusScope.of(Get.context!).requestFocus(
+    //             suggestedVideoController.videoFocusNodes[
+    //                 suggestedVideoController.currentlyPlayingIndex.value]);
+    //         _adjustScrollPosition(Get.context!);
+    //         debugPrint(
+    //             'Left released - Stopped at index: ${suggestedVideoController.currentlyPlayingIndex.value}');
+    //         update();
+    //         suggestedVideoController.update();
+    //         Get.forceAppUpdate();
+    //       }
+    //       break;
+    //   }
+    // }
   }
 
   void _showExitDialog() {
@@ -660,7 +667,7 @@ class ScreenPlayerController extends GetxController {
     const double cardWidth = 180 + 16;
     final ScrollController scrollController =
         suggestedVideoController.scrollController;
-    final int index = suggestedVideoController.currentlyPlayingIndex.value;
+    int index = suggestedVideoController.currentlyPlayingIndex.value;
 
     final targetOffset = index * cardWidth -
         (MediaQuery.of(context).size.width / 2) +
@@ -712,7 +719,7 @@ class ScreenPlayerController extends GetxController {
         } else if (value == 'Quality') {
           showQualityMenu(context);
         } else if (value == 'FullScreen') {
-          toggleFullScreen();
+          // toggleFullScreen();
         }
       }
     });
@@ -766,6 +773,20 @@ class ScreenPlayerController extends GetxController {
   }
 
   /// shivanshu added
+  void resetFocusToFirstItem() {
+    suggestedVideoController.currentlyPlayingIndex.value = 0;
+
+    if (Get.context != null &&
+        suggestedVideoController.videoFocusNodes.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        FocusScope.of(Get.context!).requestFocus(
+          suggestedVideoController.videoFocusNodes[0],
+        );
+        debugPrint('Reset focus to index 0');
+      });
+    }
+  }
+
   void _handleLeftMovement() {
     _isLeftPressed = true;
     showControls.value = true;

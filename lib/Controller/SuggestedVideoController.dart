@@ -14,8 +14,6 @@ class SuggestedVideoController extends GetxController {
   final RxInt lastFocusedIndex = 0.obs;
   final RxBool showSuggestedList = true.obs; // or false.obs initially
 
-
-
   @override
   void onInit() {
     scrollController = ScrollController();
@@ -28,18 +26,12 @@ class SuggestedVideoController extends GetxController {
     super.onInit();
   }
 
-  // void hideSuggestedVideoList(bool visible) {
-  //   showSuggestedList.value = visible;
-  //   debugPrint("Suggested list visibility: $visible");
-  // }
   void hideSuggestedVideoList(bool visible) {
     showSuggestedList.value = visible;
-    // If hiding the list, also hide controls if needed
     if (!visible) {
       Get.find<ScreenPlayerController>().showControls.value = false;
     }
   }
-
 
   Future<void> fetchSortedVideoData() async {
     try {
@@ -47,7 +39,8 @@ class SuggestedVideoController extends GetxController {
       isLoading.value = true;
       List<dynamic> data = await ApiIntegration().getVideoData();
       if (data.isNotEmpty) {
-        data.sort((a, b) => int.parse(b['video_id']).compareTo(int.parse(a['video_id'])));
+        data.sort((a, b) =>
+            int.parse(b['video_id']).compareTo(int.parse(a['video_id'])));
         videoData.assignAll(data);
         videoFocusNodes = List.generate(
           videoData.length,
@@ -79,26 +72,6 @@ class SuggestedVideoController extends GetxController {
   bool get canMoveRight => currentlyPlayingIndex.value < videoData.length - 1;
   final _navigationLock = false.obs;
 
-  // void moveLeft() {
-  //   if (!canMoveLeft || _navigationLock.value) return;
-  //   _navigationLock.value = true;
-  //
-  //   currentlyPlayingIndex.value--;
-  //   _updateFocusAndScroll();
-  //
-  //   Future.delayed(const Duration(milliseconds: 200), () => _navigationLock.value = false);
-  // }
-  //
-  // void moveRight() {
-  //   if (!canMoveRight || _navigationLock.value) return;
-  //   _navigationLock.value = true;
-  //
-  //   currentlyPlayingIndex.value++;
-  //   _updateFocusAndScroll();
-  //
-  //   Future.delayed(const Duration(milliseconds: 200), () => _navigationLock.value = false);
-  // }
-  // Update move methods
   void moveLeft() {
     if (!canMoveLeft || _navigationLock.value) return;
     _navigationLock.value = true;
@@ -124,15 +97,23 @@ class SuggestedVideoController extends GetxController {
     }
   }
 
+  DateTime _lastScrollTime = DateTime.now();
+  Duration scrollCooldown = const Duration(milliseconds: 400);
 
+  Future<void> scrollToIndexThrottled(int index) async {
+    final now = DateTime.now();
+    if (now.difference(_lastScrollTime) < scrollCooldown) return;
+    _lastScrollTime = now;
+    await scrollToIndex(index, requestFocus: false);
+  }
 
-  Future<void> scrollToIndex(int index) async {
-
+  Future<void> scrollToIndex(int index, {bool requestFocus = true}) async {
     if (index < 0 || index >= videoData.length) return;
     if (!scrollController.hasClients) {
       debugPrint('ScrollController not attached, cannot scroll');
       return;
     }
+
     currentlyPlayingIndex.value = index;
     lastFocusedIndex.value = index;
 
@@ -146,35 +127,10 @@ class SuggestedVideoController extends GetxController {
       curve: Curves.easeOutQuad,
     );
 
-    if (videoFocusNodes.length > index) {
+    if (requestFocus && videoFocusNodes.length > index) {
       videoFocusNodes[index].requestFocus();
     }
   }
-
-  // Future<void> scrollToIndex(int index) async {
-  //   if (index < 0 || index >= videoData.length) return;
-  //
-  //   // Update both indices
-  //   currentlyPlayingIndex.value = index;
-  //   lastFocusedIndex.value = index;
-  //
-  //   // Calculate scroll position to center the item
-  //   final scrollPosition = index * cardWidth -
-  //       (Get.context!.mediaQuerySize.width / 2) +
-  //       (cardWidth / 2);
-  //
-  //   // Smooth scroll
-  //   await scrollController.animateTo(
-  //     scrollPosition.clamp(0.0, scrollController.position.maxScrollExtent),
-  //     duration: const Duration(milliseconds: 300),
-  //     curve: Curves.easeOutQuad,
-  //   );
-  //
-  //   // Ensure focus is set after scrolling completes
-  //   if (videoFocusNodes.length > index) {
-  //     videoFocusNodes[index].requestFocus();
-  //   }
-  // }
 
   @override
   void onReady() {
@@ -185,11 +141,6 @@ class SuggestedVideoController extends GetxController {
       // restoreFocus();
     });
   }
-
-
-
-
-
 
   /// shivanshu added this reset focus for resetting.
   void resetFocus() {
@@ -207,7 +158,9 @@ class SuggestedVideoController extends GetxController {
       Get.snackbar("Error", "Invalid Video URL");
       return;
     }
-    String fullUrl = videoUrl.startsWith('http') ? videoUrl : 'https://mercyott.com$videoUrl';
+    String fullUrl = videoUrl.startsWith('http')
+        ? videoUrl
+        : 'https://mercyott.com$videoUrl';
     bool isLive = fullUrl.contains(".m3u8");
     Get.find<ScreenPlayerController>().initializePlayer(fullUrl, live: isLive);
     Get.find<ScreenPlayerController>().showControls.value = true;

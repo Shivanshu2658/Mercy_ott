@@ -11,34 +11,6 @@ import 'package:video_player/video_player.dart';
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
-  // Future<bool> _onWillPop(BuildContext context) async {
-  //   final playerController = Get.find<ScreenPlayerController>();
-  //
-  //   if (!playerController.isLive.value) {
-  //     playerController.switchToLive();
-  //     return false;
-  //   }
-  //
-  //   final bool? result = await Get.dialog(
-  //     AlertDialog(
-  //       title: const Text("Exit App"),
-  //       content: const Text("Do you really want to exit?"),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Get.back(result: false),
-  //           child: const Text("No"),
-  //         ),
-  //         TextButton(
-  //           onPressed: () => Get.back(result: true),
-  //           child: const Text("Yes"),
-  //         ),
-  //       ],
-  //     ),
-  //     barrierDismissible: false,
-  //   );
-  //
-  //   return result ?? false;
-  // }
 
   Future<bool> _onWillPop(BuildContext context) async {
     final playerController = Get.find<ScreenPlayerController>();
@@ -168,32 +140,31 @@ class HomePage extends StatelessWidget {
                                       Focus(
                                         focusNode:
                                             playerController.liveButtonFocus,
-                                        onKeyEvent: (node, event) {
-                                          final controller = Get.find<
-                                              SuggestedVideoController>();
-                                          if (event is KeyDownEvent) {
-                                            if (event.logicalKey ==
-                                                LogicalKeyboardKey.arrowLeft) {
-                                              controller.moveLeft();
-                                              return KeyEventResult.handled;
-                                            } else if (event.logicalKey ==
-                                                LogicalKeyboardKey.arrowRight) {
-                                              controller.moveRight();
-                                              return KeyEventResult.handled;
-                                            } else if (event.logicalKey ==
-                                                LogicalKeyboardKey.arrowDown) {
-                                              Get.find<
-                                                      SuggestedVideoController>()
-                                                  .hideSuggestedVideoList(
-                                                      false);
-
-                                              return KeyEventResult.handled;
-                                            }
-                                          } else if (event is KeyUpEvent) {
-                                            controller.restoreFocus();
-                                          }
-                                          return KeyEventResult.ignored;
-                                        },
+                                        // onKeyEvent: (node, event) {
+                                        //   final controller = Get.find<
+                                        //       SuggestedVideoController>();
+                                        //   if (event is KeyDownEvent) {
+                                        //     // if (event.logicalKey ==
+                                        //     //     LogicalKeyboardKey.arrowLeft) {
+                                        //     //   // controller.moveLeft();
+                                        //     //   return KeyEventResult.handled;
+                                        //     // } else if (event.logicalKey ==
+                                        //     //     LogicalKeyboardKey.arrowRight) {
+                                        //     //   // controller.moveRight();
+                                        //     //   return KeyEventResult.handled;
+                                        //     // } else
+                                        //       if (event.logicalKey ==
+                                        //         LogicalKeyboardKey.arrowDown) {
+                                        //         controller.hideSuggestedVideoList(false);
+                                        //
+                                        //       return KeyEventResult.handled;
+                                        //     }
+                                        //   }
+                                        //   else if (event is KeyUpEvent) {
+                                        //     controller.restoreFocus();
+                                        //   }
+                                        //   return KeyEventResult.ignored;
+                                        // },
                                         child: Obx(() => AnimatedContainer(
                                               duration: const Duration(
                                                   milliseconds: 200),
@@ -226,16 +197,7 @@ class HomePage extends StatelessWidget {
                                                     else{
                                                       print("Else condition ()()(12121");
                                                     }
-                                                    // else if(playerController.isLiveButtonFocused.value){
-                                                    //
-                                                    // }
                                                   },
-
-                                                  // playerController
-                                                  //         .isLive.value
-                                                  //     ? null
-                                                  //     : () => playerController
-                                                  //         .switchToLive(),
                                                   style: TextButton.styleFrom(
                                                       padding: EdgeInsets.zero),
                                                   child: Text(
@@ -416,14 +378,14 @@ class HomePage extends StatelessWidget {
                                                                       .white,
                                                                   fontSize: 16),
                                                         ),
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                        Icons.fullscreen,
-                                                        color: Colors.white,
-                                                        size: 30),
-                                                    onPressed: playerController
-                                                        .toggleFullScreen,
-                                                  ),
+                                                  // IconButton(
+                                                  //   icon: const Icon(
+                                                  //       Icons.fullscreen,
+                                                  //       color: Colors.white,
+                                                  //       size: 30),
+                                                  //   onPressed: playerController
+                                                  //       .toggleFullScreen,
+                                                  // ),
                                                 ],
                                               ),
                                             ],
